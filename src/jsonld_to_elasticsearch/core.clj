@@ -35,7 +35,8 @@
    })
 
 (def ^:private Mapping
-  {:mappings {s/Keyword {s/Keyword s/Any}}})
+  {:mappings {s/Keyword {s/Keyword s/Any}}
+   :settings s/Any})
 
 ; ----- Private functions -----
 
@@ -117,9 +118,13 @@
     :as config}
    {:keys [input mapping]
     :as options}]
-  (let [[mapping-type mapping'] (first mapping)
+  (let [settings (:settings mapping)
+        [mapping-type mapping'] (first (:mappings mapping))
         mapping-type' (name mapping-type)]
-    (mount/start-with-args (assoc config :mapping mapping' :mapping-type mapping-type'))
+    (mount/start-with-args (assoc config
+                                  :mapping mapping'
+                                  :mapping-type mapping-type'
+                                  :settings settings))
     (with-open [input' (if-not (instance? BufferedReader input) (BufferedReader. input) input)]
       (doseq [documents (partition-all batch-size (map parse-jsonld (line-seq input')))]
         (esb/bulk-with-index-and-type (:conn elasticsearch)
